@@ -85,7 +85,7 @@ public class BInstallerView extends View
     Activity mActivity;
 
 
-    protected String baseNameForTile( int tileIndex )
+    protected static String baseNameForTile( int tileIndex )
     {
       int lon = (tileIndex % 72 ) * 5 - 180;
       int lat = (tileIndex / 72 ) * 5 - 90;
@@ -94,12 +94,12 @@ public class BInstallerView extends View
       return slon + "_" + slat;
     }
     
-    private int gridPos2Tileindex( int ix, int iy )
+    private static int gridPos2Tileindex( int ix, int iy )
     {
       return (35-iy)*72 + ( ix >= 70 ? ix-70: ix+2 );
     }
     
-    private int tileForBaseName( String basename )
+    private static int tileForBaseName( String basename )
     {
       String uname = basename.toUpperCase(Locale.ROOT);
       int idx = uname.indexOf( "_" );
