@@ -92,5 +92,6 @@ dependencies {
     implementation project(':brouter-core')
     implementation project(':brouter-expressions')
     implementation project(':brouter-util')
-	
+
+    testImplementation 'junit:junit:4.13.2'
 }
