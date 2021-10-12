@@ -99,7 +99,7 @@ public class BInstallerView extends View
       return (35-iy)*72 + ( ix >= 70 ? ix-70: ix+2 );
     }
     
-    private static int tileForBaseName( String basename )
+    protected static int tileForBaseName( String basename )
     {
       String uname = basename.toUpperCase(Locale.ROOT);
       int idx = uname.indexOf( "_" );
