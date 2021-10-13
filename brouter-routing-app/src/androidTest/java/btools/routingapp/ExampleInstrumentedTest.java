@@ -1,6 +1,7 @@
 package btools.routingapp;
 
 import android.content.Context;
+import android.os.Environment;
 
 import androidx.test.platform.app.InstrumentationRegistry;
 import androidx.test.ext.junit.runners.AndroidJUnit4;
@@ -21,6 +22,19 @@ public class ExampleInstrumentedTest {
   public void useAppContext() {
     // Context of the app under test.
     Context appContext = InstrumentationRegistry.getInstrumentation().getTargetContext();
-    assertEquals("com.example.brouterplayground", appContext.getPackageName());
+    assertEquals("btools.routingapp", appContext.getPackageName());
+  }
+
+  @Test
+  public void checkExternalStorage() {
+    Context appContext = InstrumentationRegistry.getInstrumentation().getTargetContext();
+    // assertEquals("/data/user/0/btools.routingapp/files", appContext.getFilesDir());
+    // assertEquals("/storage/emulated/0/Android/data/btools.routingapp/files", appContext.getExternalFilesDir(null));
+
+    assertEquals("mounted", Environment.getExternalStorageState());
+    assertTrue(Environment.isExternalStorageEmulated());
+    assertFalse(Environment.isExternalStorageManager());
+    assertFalse(Environment.isExternalStorageLegacy());
+    // assertEquals("/storage/emulated/0", Environment.getExternalStorageDirectory());
   }
 }
