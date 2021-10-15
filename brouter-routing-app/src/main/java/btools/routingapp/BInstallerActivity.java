@@ -9,8 +9,6 @@ import android.content.Intent;
 import android.content.IntentFilter;
 import android.content.pm.ActivityInfo;
 import android.os.Bundle;
-import android.os.PowerManager;
-import android.os.PowerManager.WakeLock;
 
 import java.util.HashSet;
 import java.util.Set;
@@ -22,8 +20,6 @@ public class BInstallerActivity extends BInstallerMainActivity {
   private static final int DIALOG_CONFIRM_DELETE_ID = 1;
 
   private BInstallerView mBInstallerView;
-  private PowerManager mPowerManager;
-  private WakeLock mWakeLock;
   private DownloadReceiver myReceiver;
   private final Set<Integer> dialogIds = new HashSet<>();
 
@@ -31,13 +27,6 @@ public class BInstallerActivity extends BInstallerMainActivity {
   @SuppressWarnings("deprecation")
   public void onCreate(Bundle savedInstanceState) {
     super.onCreate(savedInstanceState);
-
-    // Get an instance of the PowerManager
-    mPowerManager = (PowerManager) getSystemService(POWER_SERVICE);
-
-    // Create a bright wake lock
-    mWakeLock = mPowerManager.newWakeLock(PowerManager.SCREEN_BRIGHT_WAKE_LOCK, getClass()
-      .getName());
 
     setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_LANDSCAPE);
 
@@ -48,12 +37,6 @@ public class BInstallerActivity extends BInstallerMainActivity {
   @Override
   protected void onResume() {
     super.onResume();
-    /*
-     * when the activity is resumed, we acquire a wake-lock so that the
-     * screen stays on, since the user will likely not be fiddling with the
-     * screen or buttons.
-     */
-    mWakeLock.acquire();
 
     IntentFilter filter = new IntentFilter();
     filter.addAction(DOWNLOAD_ACTION);
@@ -65,12 +48,6 @@ public class BInstallerActivity extends BInstallerMainActivity {
   @Override
   protected void onPause() {
     super.onPause();
-
-
-    super.onPause();
-
-    mWakeLock.release();
-
   }
 
   @Override
