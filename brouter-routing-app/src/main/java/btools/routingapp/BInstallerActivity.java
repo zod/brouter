@@ -11,6 +11,7 @@ import android.content.pm.ActivityInfo;
 import android.os.Bundle;
 
 import java.io.File;
+import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.Locale;
 import java.util.Set;
@@ -32,7 +33,6 @@ public class BInstallerActivity extends BInstallerMainActivity {
   private DownloadReceiver downloadReceiver;
   private File mBaseDir;
   private final Set<Integer> dialogIds = new HashSet<>();
-  private long availableSize;
 
   @Override
   @SuppressWarnings("deprecation")
@@ -45,7 +45,12 @@ public class BInstallerActivity extends BInstallerMainActivity {
 
     mBInstallerView = new BInstallerView(this);
     mBInstallerView.setOnClickListener(
-      view -> mBInstallerView.toggleDownload()
+      view -> {
+        if (mBInstallerView.getSelectedTiles(MASK_DELETED_RD5).size() > 0) {
+          showConfirmDelete();
+        }
+        mBInstallerView.toggleDownload();
+      }
     );
     setContentView(mBInstallerView);
     scanExistingFiles();
@@ -85,7 +90,7 @@ public class BInstallerActivity extends BInstallerMainActivity {
           .setTitle("Confirm Delete")
           .setMessage("Really delete?").setPositiveButton("Yes", new DialogInterface.OnClickListener() {
           public void onClick(DialogInterface dialog, int id) {
-            mBInstallerView.deleteSelectedTiles();
+            deleteSelectedTiles();
           }
         }).setNegativeButton("No", new DialogInterface.OnClickListener() {
           public void onClick(DialogInterface dialog, int id) {
@@ -121,9 +126,9 @@ public class BInstallerActivity extends BInstallerMainActivity {
       scanExistingFiles(secondary);
     }
 
-    availableSize = -1;
+    long availableSize = -1;
     try {
-      availableSize = (long) (BInstallerActivity.getAvailableSpace(mBaseDir.getAbsolutePath()));
+      availableSize = BInstallerActivity.getAvailableSpace(mBaseDir.getAbsolutePath());
     } catch (Exception e) { /* ignore */ }
     mBInstallerView.setAvailableSize(availableSize);
   }
@@ -144,6 +149,14 @@ public class BInstallerActivity extends BInstallerMainActivity {
     }
   }
 
+  private void deleteSelectedTiles() {
+    ArrayList<Integer> selectedTiles = mBInstallerView.getSelectedTiles(MASK_DELETED_RD5);
+    for (int tileIndex : selectedTiles) {
+      new File(mBaseDir, "brouter/segments4/" + baseNameForTile(tileIndex) + ".rd5").delete();
+    }
+    scanExistingFiles();
+  }
+
   private int tileForBaseName(String basename) {
     String uname = basename.toUpperCase(Locale.ROOT);
     int idx = uname.indexOf("_");
@@ -157,6 +170,14 @@ public class BInstallerActivity extends BInstallerMainActivity {
     if (ilon < -180 || ilon >= 180 || ilon % 5 != 0) return -1;
     if (ilat < -90 || ilat >= 90 || ilat % 5 != 0) return -1;
     return (ilon + 180) / 5 + 72 * ((ilat + 90) / 5);
+  }
+
+  protected String baseNameForTile(int tileIndex) {
+    int lon = (tileIndex % 72) * 5 - 180;
+    int lat = (tileIndex / 72) * 5 - 90;
+    String slon = lon < 0 ? "W" + (-lon) : "E" + lon;
+    String slat = lat < 0 ? "S" + (-lat) : "N" + lat;
+    return slon + "_" + slat;
   }
 
   public class DownloadReceiver extends BroadcastReceiver {

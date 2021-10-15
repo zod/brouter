@@ -86,7 +86,6 @@ public class BInstallerView extends View {
     }
 
     tileStatus = new int[72 * 36];
-    scanExistingFiles();
 
     float scaleX = imgwOrig / ((float) bmp.getWidth());
     float scaley = imghOrig / ((float) bmp.getHeight());
@@ -95,10 +94,6 @@ public class BInstallerView extends View {
 
     mat = new Matrix();
     mat.postScale(viewscale, viewscale);
-  }
-
-  private void scanExistingFiles() {
-
   }
 
   public void setAvailableSize(long availableSize) {
@@ -116,6 +111,20 @@ public class BInstallerView extends View {
         tileStatus[tileIndex] ^= tileStatus[tileIndex] & tileMask;
       }
     }
+  }
+
+  public ArrayList<Integer> getSelectedTiles(int tileMask) {
+    ArrayList<Integer> selectedTiles = new ArrayList<>();
+    for (int ix = 0; ix < 72; ix++) {
+      for (int iy = 0; iy < 36; iy++) {
+        int tileIndex = gridPos2Tileindex(ix, iy);
+        if ((tileStatus[tileIndex] & tileMask) != 0) {
+          selectedTiles.add(tileIndex);
+        }
+      }
+    }
+
+    return selectedTiles;
   }
 
   @Override
@@ -139,11 +148,6 @@ public class BInstallerView extends View {
     if (isDownloading) {
       downloadCanceled = true;
       downloadAction = "Canceling...";
-      return;
-    }
-
-    if (delTiles > 0) {
-      ((BInstallerActivity) getContext()).showConfirmDelete();
       return;
     }
 
@@ -198,7 +202,7 @@ public class BInstallerView extends View {
     downloadAction = "";
     isDownloading = b;
     if (!b) {
-      scanExistingFiles();
+      // scanExistingFiles();
     }
     invalidate();
   }
@@ -354,19 +358,6 @@ public class BInstallerView extends View {
           }
         }
       }
-  }
-
-  public void deleteSelectedTiles() {
-    for (int ix = 0; ix < 72; ix++) {
-      for (int iy = 0; iy < 36; iy++) {
-        int tidx = gridPos2Tileindex(ix, iy);
-        if ((tileStatus[tidx] & MASK_DELETED_RD5) != 0) {
-          new File(baseDir, "brouter/segments4/" + baseNameForTile(tidx) + ".rd5").delete();
-        }
-      }
-    }
-    scanExistingFiles();
-    invalidate();
   }
 
   @Override
