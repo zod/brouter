@@ -10,8 +10,12 @@ import android.content.IntentFilter;
 import android.content.pm.ActivityInfo;
 import android.os.Bundle;
 
+import java.io.File;
 import java.util.HashSet;
+import java.util.Locale;
 import java.util.Set;
+
+import btools.router.RoutingHelper;
 
 public class BInstallerActivity extends BInstallerMainActivity {
 
@@ -19,9 +23,16 @@ public class BInstallerActivity extends BInstallerMainActivity {
 
   private static final int DIALOG_CONFIRM_DELETE_ID = 1;
 
+  private static final int MASK_SELECTED_RD5 = 1;
+  private static final int MASK_DELETED_RD5 = 2;
+  private static final int MASK_INSTALLED_RD5 = 4;
+  private static final int MASK_CURRENT_RD5 = 8;
+
   private BInstallerView mBInstallerView;
   private DownloadReceiver downloadReceiver;
-  private final Set<Integer> dialogIds = new HashSet<Integer>();
+  private File mBaseDir;
+  private final Set<Integer> dialogIds = new HashSet<>();
+  private long availableSize;
 
   @Override
   @SuppressWarnings("deprecation")
@@ -30,8 +41,14 @@ public class BInstallerActivity extends BInstallerMainActivity {
 
     setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_LANDSCAPE);
 
+    mBaseDir = ConfigHelper.getBaseDir(this);
+
     mBInstallerView = new BInstallerView(this);
+    mBInstallerView.setOnClickListener(
+      view -> mBInstallerView.toggleDownload()
+    );
     setContentView(mBInstallerView);
+    scanExistingFiles();
   }
 
   @Override
@@ -92,6 +109,54 @@ public class BInstallerActivity extends BInstallerMainActivity {
     }
     dialogIds.add(id);
     showDialog(id);
+  }
+
+  private void scanExistingFiles() {
+    mBInstallerView.clearAllTilesStatus(MASK_INSTALLED_RD5 | MASK_CURRENT_RD5);
+
+    scanExistingFiles(new File(mBaseDir, "brouter/segments4"));
+
+    File secondary = RoutingHelper.getSecondarySegmentDir(new File(mBaseDir, "brouter/segments4"));
+    if (secondary != null) {
+      scanExistingFiles(secondary);
+    }
+
+    availableSize = -1;
+    try {
+      availableSize = (long) (BInstallerActivity.getAvailableSpace(mBaseDir.getAbsolutePath()));
+    } catch (Exception e) { /* ignore */ }
+    mBInstallerView.setAvailableSize(availableSize);
+  }
+
+  private void scanExistingFiles(File dir) {
+    String[] fileNames = dir.list();
+    if (fileNames == null) return;
+    String suffix = ".rd5";
+    for (String fileName : fileNames) {
+      if (fileName.endsWith(suffix)) {
+        String basename = fileName.substring(0, fileName.length() - suffix.length());
+        int tileIndex = tileForBaseName(basename);
+        mBInstallerView.setTileStatus(tileIndex, MASK_INSTALLED_RD5);
+
+        long age = System.currentTimeMillis() - new File(dir, fileName).lastModified();
+        if (age < 10800000) mBInstallerView.setTileStatus(tileIndex, MASK_CURRENT_RD5); // 3 hours
+      }
+    }
+  }
+
+  private int tileForBaseName(String basename) {
+    String uname = basename.toUpperCase(Locale.ROOT);
+    int idx = uname.indexOf("_");
+    if (idx < 0) return -1;
+    String slon = uname.substring(0, idx);
+    String slat = uname.substring(idx + 1);
+    int ilon = slon.charAt(0) == 'W' ? -Integer.parseInt(slon.substring(1)) :
+      (slon.charAt(0) == 'E' ? Integer.parseInt(slon.substring(1)) : -1);
+    int ilat = slat.charAt(0) == 'S' ? -Integer.parseInt(slat.substring(1)) :
+      (slat.charAt(0) == 'N' ? Integer.parseInt(slat.substring(1)) : -1);
+    if (ilon < -180 || ilon >= 180 || ilon % 5 != 0) return -1;
+    if (ilat < -90 || ilat >= 90 || ilat % 5 != 0) return -1;
+    return (ilon + 180) / 5 + 72 * ((ilat + 90) / 5);
   }
 
   public class DownloadReceiver extends BroadcastReceiver {
