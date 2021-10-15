@@ -20,8 +20,8 @@ public class BInstallerActivity extends BInstallerMainActivity {
   private static final int DIALOG_CONFIRM_DELETE_ID = 1;
 
   private BInstallerView mBInstallerView;
-  private DownloadReceiver myReceiver;
-  private final Set<Integer> dialogIds = new HashSet<>();
+  private DownloadReceiver downloadReceiver;
+  private final Set<Integer> dialogIds = new HashSet<Integer>();
 
   @Override
   @SuppressWarnings("deprecation")
@@ -41,8 +41,8 @@ public class BInstallerActivity extends BInstallerMainActivity {
     IntentFilter filter = new IntentFilter();
     filter.addAction(DOWNLOAD_ACTION);
 
-    myReceiver = new DownloadReceiver();
-    registerReceiver(myReceiver, filter);
+    downloadReceiver = new DownloadReceiver();
+    registerReceiver(downloadReceiver, filter);
   }
 
   @Override
@@ -53,7 +53,7 @@ public class BInstallerActivity extends BInstallerMainActivity {
   @Override
   public void onDestroy() {
     super.onDestroy();
-    if (myReceiver != null) unregisterReceiver(myReceiver);
+    if (downloadReceiver != null) unregisterReceiver(downloadReceiver);
     System.exit(0);
   }
 
