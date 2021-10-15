@@ -48,8 +48,11 @@ public class BInstallerActivity extends BInstallerMainActivity {
       view -> {
         if (mBInstallerView.getSelectedTiles(MASK_DELETED_RD5).size() > 0) {
           showConfirmDelete();
+        } else if (mBInstallerView.getSelectedTiles(MASK_SELECTED_RD5).size() > 0) {
+          downloadSelectedTiles();
+        } else {
+          downloadInstalledTiles();
         }
-        mBInstallerView.toggleDownload();
       }
     );
     setContentView(mBInstallerView);
@@ -157,6 +160,34 @@ public class BInstallerActivity extends BInstallerMainActivity {
     scanExistingFiles();
   }
 
+  private void downloadSelectedTiles() {
+    ArrayList<Integer> selectedTiles = mBInstallerView.getSelectedTiles(MASK_SELECTED_RD5);
+    downloadAll(selectedTiles);
+    mBInstallerView.clearAllTilesStatus(MASK_SELECTED_RD5);
+  }
+
+  private void downloadInstalledTiles() {
+    ArrayList<Integer> selectedTiles = mBInstallerView.getSelectedTiles(MASK_INSTALLED_RD5);
+    downloadAll(selectedTiles);
+  }
+
+  private void downloadAll(ArrayList<Integer> downloadList) {
+    ArrayList<String> urlparts = new ArrayList<>();
+    for (Integer i : downloadList) {
+      urlparts.add(baseNameForTile(i));
+    }
+
+    mBInstallerView.setDownloadState(true);
+    mBInstallerView.setDownloadText("Starting download...");
+
+    Intent intent = new Intent(this, DownloadService.class);
+    intent.putExtra("dir", mBaseDir.getAbsolutePath() + "/brouter/");
+    intent.putExtra("urlparts", urlparts);
+    this.startService(intent);
+
+    deleteRawTracks(); // invalidate raw-tracks after data update
+  }
+
   private int tileForBaseName(String basename) {
     String uname = basename.toUpperCase(Locale.ROOT);
     int idx = uname.indexOf("_");
@@ -180,6 +211,18 @@ public class BInstallerActivity extends BInstallerMainActivity {
     return slon + "_" + slat;
   }
 
+  private void deleteRawTracks() {
+    File modeDir = new File(mBaseDir, "brouter/modes");
+    String[] fileNames = modeDir.list();
+    if (fileNames == null) return;
+    for (String fileName : fileNames) {
+      if (fileName.endsWith("_rawtrack.dat")) {
+        File f = new File(modeDir, fileName);
+        f.delete();
+      }
+    }
+  }
+
   public class DownloadReceiver extends BroadcastReceiver {
 
     @Override
@@ -187,7 +230,11 @@ public class BInstallerActivity extends BInstallerMainActivity {
       if (intent.hasExtra("txt")) {
         String txt = intent.getStringExtra("txt");
         boolean ready = intent.getBooleanExtra("ready", false);
-        mBInstallerView.setState(txt, ready);
+        mBInstallerView.setDownloadText(txt);
+        mBInstallerView.setDownloadState(ready);
+        if (!ready) {
+          scanExistingFiles();
+        }
       }
     }
   }

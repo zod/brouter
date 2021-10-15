@@ -2,7 +2,6 @@ package btools.routingapp;
 
 import android.app.Activity;
 import android.content.Context;
-import android.content.Intent;
 import android.content.res.AssetManager;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
@@ -28,7 +27,6 @@ public class BInstallerView extends View {
   Paint pnt_1 = new Paint();
   Paint pnt_2 = new Paint();
   Paint paint = new Paint();
-  Activity mActivity;
   int btnh = 40;
   int btnw = 160;
   float tx, ty;
@@ -48,7 +46,6 @@ public class BInstallerView extends View {
   private final File baseDir;
   private boolean isDownloading = false;
   private volatile String currentDownloadOperation = "";
-  private String downloadAction = "";
   private long totalSize = 0;
   private long rd5Tiles = 0;
   private long delTiles = 0;
@@ -58,7 +55,6 @@ public class BInstallerView extends View {
 
   public BInstallerView(Context context) {
     super(context);
-    mActivity = (Activity) context;
 
     DisplayMetrics metrics = new DisplayMetrics();
     ((Activity) getContext()).getWindowManager().getDefaultDisplay().getMetrics(metrics);
@@ -132,79 +128,18 @@ public class BInstallerView extends View {
     mOnClickListener = listener;
   }
 
-  protected String baseNameForTile(int tileIndex) {
-    int lon = (tileIndex % 72) * 5 - 180;
-    int lat = (tileIndex / 72) * 5 - 90;
-    String slon = lon < 0 ? "W" + (-lon) : "E" + lon;
-    String slat = lat < 0 ? "S" + (-lat) : "N" + lat;
-    return slon + "_" + slat;
+  public void setDownloadText(String downloadText) {
+    currentDownloadOperation = downloadText;
+    invalidate();
+  }
+
+  public void setDownloadState(boolean downloadActive) {
+    isDownloading = downloadActive;
+    invalidate();
   }
 
   private int gridPos2Tileindex(int ix, int iy) {
     return (35 - iy) * 72 + (ix >= 70 ? ix - 70 : ix + 2);
-  }
-
-  public void toggleDownload() {
-    if (isDownloading) {
-      downloadCanceled = true;
-      downloadAction = "Canceling...";
-      return;
-    }
-
-    int min_size = Integer.MAX_VALUE;
-
-    ArrayList<Integer> downloadList = new ArrayList<>();
-    // prepare download list
-    for (int ix = 0; ix < 72; ix++) {
-      for (int iy = 0; iy < 36; iy++) {
-        int tidx = gridPos2Tileindex(ix, iy);
-        if ((tileStatus[tidx] & MASK_SELECTED_RD5) != 0) {
-          int tilesize = BInstallerSizes.getRd5Size(tidx);
-          downloadList.add(tidx);
-          if (tilesize > 0 && tilesize < min_size) {
-            min_size = tilesize;
-          }
-        }
-      }
-    }
-
-    if (downloadList.size() > 0) {
-      isDownloading = true;
-      downloadAll(downloadList);
-      for (Integer i : downloadList) {
-        tileStatus[i] ^= tileStatus[i] & MASK_SELECTED_RD5;
-      }
-      downloadList.clear();
-    }
-  }
-
-  private void downloadAll(ArrayList<Integer> downloadList) {
-    ArrayList<String> urlparts = new ArrayList<>();
-    for (Integer i : downloadList) {
-      urlparts.add(baseNameForTile(i));
-    }
-
-    currentDownloadOperation = "Start download ...";
-    downloadAction = "";
-    downloadCanceled = false;
-    isDownloading = true;
-
-    Intent intent = new Intent(mActivity, DownloadService.class);
-    intent.putExtra("dir", baseDir.getAbsolutePath() + "/brouter/");
-    intent.putExtra("urlparts", urlparts);
-    mActivity.startService(intent);
-
-    deleteRawTracks(); // invalidate raw-tracks after data update
-  }
-
-  public void setState(String txt, boolean b) {
-    currentDownloadOperation = txt;
-    downloadAction = "";
-    isDownloading = b;
-    if (!b) {
-      // scanExistingFiles();
-    }
-    invalidate();
   }
 
   private int tileIndex(float x, float y) {
@@ -219,18 +154,6 @@ public class BInstallerView extends View {
     testVector[1] = 1.f;
     mat.mapVectors(testVector);
     return testVector[1] / viewscale;
-  }
-
-  private void deleteRawTracks() {
-    File modeDir = new File(baseDir, "brouter/modes");
-    String[] fileNames = modeDir.list();
-    if (fileNames == null) return;
-    for (String fileName : fileNames) {
-      if (fileName.endsWith("_rawtrack.dat")) {
-        File f = new File(modeDir, fileName);
-        f.delete();
-      }
-    }
   }
 
   @Override
@@ -297,7 +220,7 @@ public class BInstallerView extends View {
     if (isDownloading) {
       paint.setTextSize(30);
       canvas.drawText(currentDownloadOperation, 30, (imgh / 3) * 2 - 30, paint);
-      //  canvas.drawText( currentDownloadOperation +  " " + currentDownloadFile + sizeHint, 30, (imgh/3)*2-30, paint);
+      String downloadAction = "";
       canvas.drawText(downloadAction, 30, (imgh / 3) * 2, paint);
     }
     if (!tilesVisible && !isDownloading) {
@@ -440,19 +363,6 @@ public class BInstallerView extends View {
 
         // download button?
         if ((delTiles > 0 || rd5Tiles >= 0 || isDownloading) && event.getX() > imgwOrig - btnw * scaleOrig && event.getY() > imghOrig - btnh * scaleOrig) {
-          if (rd5Tiles == 0) {
-            for (int ix = 0; ix < 72; ix++) {
-              for (int iy = 0; iy < 36; iy++) {
-                int tidx = gridPos2Tileindex(ix, iy);
-                if (tidx != -1) {
-                  if ((tileStatus[tidx] & MASK_INSTALLED_RD5) != 0) {
-                    tileStatus[tidx] |= MASK_SELECTED_RD5;
-                  }
-                }
-
-              }
-            }
-          }
           if (mOnClickListener != null) {
             mOnClickListener.onClick(null);
           }
