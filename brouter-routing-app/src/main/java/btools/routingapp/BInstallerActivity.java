@@ -54,6 +54,17 @@ public class BInstallerActivity extends BInstallerMainActivity {
         }
       }
     );
+    mBInstallerView.setOnSelectListener(
+      (tileIndex, tileMaskOld, tileMaskNew) -> {
+        if (mBInstallerView.getSelectedTiles(MASK_DELETED_RD5).size() > 0)
+          mBInstallerView.setDownloadButtonText("Delete " + mBInstallerView.getSelectedTiles(MASK_DELETED_RD5).size() + " tiles");
+        else if (mBInstallerView.getSelectedTiles(MASK_SELECTED_RD5).size() > 0) {
+          mBInstallerView.setDownloadButtonText("Start Download");
+        } else {
+          mBInstallerView.setDownloadButtonText("Update all");
+        }
+      }
+    );
     setContentView(mBInstallerView);
     scanExistingFiles();
   }

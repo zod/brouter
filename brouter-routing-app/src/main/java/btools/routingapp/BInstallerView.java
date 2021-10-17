@@ -46,12 +46,14 @@ public class BInstallerView extends View {
   private long mAvailableSize;
   private boolean isDownloading = false;
   private volatile String currentDownloadOperation = "";
+  private String btnText;
   private long totalSize = 0;
   private long rd5Tiles = 0;
   private long delTiles = 0;
   private final Matrix mat;
   private final Matrix matText;
   private OnClickListener mOnClickListener;
+  private OnSelectListener mOnSelectListener;
   private final GestureDetector mGestureDetector;
   private final ScaleGestureDetector mScaleGestureDetector;
 
@@ -73,6 +75,10 @@ public class BInstallerView extends View {
     mat = new Matrix();
     mGestureDetector = new GestureDetector(context, new GestureListener());
     mScaleGestureDetector = new ScaleGestureDetector(context, new ScaleGestureListener());
+  }
+
+  interface OnSelectListener {
+    void onSelect(int tileIndex, int tileMaskOld, int tileMaskNew);
   }
 
   class GestureListener extends GestureDetector.SimpleOnGestureListener {
@@ -97,14 +103,14 @@ public class BInstallerView extends View {
           int tidx = tileIndex(touchpoint[0], touchpoint[1]);
           if (tidx != -1) {
             if ((tileStatus[tidx] & MASK_SELECTED_RD5) != 0) {
-              tileStatus[tidx] ^= MASK_SELECTED_RD5;
+              toggleTileStatus(tidx, MASK_SELECTED_RD5);
               if ((tileStatus[tidx] & MASK_INSTALLED_RD5) != 0) {
-                tileStatus[tidx] |= MASK_DELETED_RD5;
+                setTileStatus(tidx, MASK_DELETED_RD5);
               }
             } else if ((tileStatus[tidx] & MASK_DELETED_RD5) != 0) {
-              tileStatus[tidx] ^= MASK_DELETED_RD5;
+              toggleTileStatus(tidx, MASK_DELETED_RD5);
             } else {
-              tileStatus[tidx] ^= MASK_SELECTED_RD5;
+              toggleTileStatus(tidx, MASK_SELECTED_RD5);
             }
           }
 
@@ -170,7 +176,20 @@ public class BInstallerView extends View {
   }
 
   public void setTileStatus(int tileIndex, int tileMask) {
+    int tileStatusOld = tileStatus[tileIndex];
     tileStatus[tileIndex] |= tileMask;
+    int tileStatusNew = tileStatus[tileIndex];
+    if (mOnSelectListener != null) {
+      mOnSelectListener.onSelect(tileIndex, tileStatusOld, tileStatusNew);
+    }
+  }
+  public void toggleTileStatus(int tileIndex, int tileMask) {
+    int tileStatusOld = tileStatus[tileIndex];
+    tileStatus[tileIndex] ^= tileMask;
+    int tileStatusNew = tileStatus[tileIndex];
+    if (mOnSelectListener != null) {
+      mOnSelectListener.onSelect(tileIndex, tileStatusOld, tileStatusNew);
+    }
   }
 
   public void clearAllTilesStatus(int tileMask) {
@@ -201,6 +220,10 @@ public class BInstallerView extends View {
     mOnClickListener = listener;
   }
 
+  public void setOnSelectListener(OnSelectListener listener) {
+    mOnSelectListener = listener;
+  }
+
   public void setDownloadText(String downloadText) {
     currentDownloadOperation = downloadText;
     invalidate();
@@ -209,6 +232,10 @@ public class BInstallerView extends View {
   public void setDownloadState(boolean downloadActive) {
     isDownloading = downloadActive;
     invalidate();
+  }
+
+  public void setDownloadButtonText(String text) {
+    btnText = text;
   }
 
   private int gridPos2Tileindex(int ix, int iy) {
@@ -328,13 +355,6 @@ public class BInstallerView extends View {
     String freemb = mAvailableSize >= 0 ? ((mAvailableSize + mb - 1) / mb) + " MB" : "?";
     canvas.drawText("Selected segments=" + rd5Tiles, 10, 25, paint);
     canvas.drawText("Size=" + totmb + " Free=" + freemb, 10, 45, paint);
-
-
-    String btnText = null;
-    if (isDownloading) btnText = "Cancel Download";
-    else if (delTiles > 0) btnText = "Delete " + delTiles + " tiles";
-    else if (rd5Tiles > 0) btnText = "Start Download";
-    else if (tilesVisible && rd5Tiles == 0) btnText = "Update all";
 
     if (btnText != null) {
       paint.setStyle(Paint.Style.STROKE);
