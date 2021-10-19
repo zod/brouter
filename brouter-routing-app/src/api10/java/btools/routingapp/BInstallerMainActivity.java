@@ -17,11 +17,11 @@ import android.os.StatFs;
 import java.util.HashSet;
 import java.util.Set;
 
-public class BInstallerMainActivity extends Activity  {
+public class BInstallerMainActivity extends Activity {
 
 
-  static public long getAvailableSpace (String baseDir) {
+  static public long getAvailableSpace(String baseDir) {
     StatFs stat = new StatFs(baseDir);
-    return (long)stat.getAvailableBlocks()*stat.getBlockSize();
+    return (long) stat.getAvailableBlocks() * stat.getBlockSize();
   }
 }

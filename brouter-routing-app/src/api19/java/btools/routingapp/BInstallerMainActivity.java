@@ -19,19 +19,18 @@ import android.speech.tts.TextToSpeech.OnInitListener;
 import android.os.StatFs;
 import android.util.Log;
 
-public class BInstallerMainActivity  extends Activity implements OnInitListener {
+public class BInstallerMainActivity extends Activity implements OnInitListener {
 
 
-    @Override
-    public void onInit(int i)
-    {
-    }
+  @Override
+  public void onInit(int i) {
+  }
 
 
-  static public long getAvailableSpace (String baseDir) {
+  static public long getAvailableSpace(String baseDir) {
     StatFs stat = new StatFs(baseDir);
 
-    return (long)stat.getAvailableBlocksLong()*stat.getBlockSizeLong();
+    return (long) stat.getAvailableBlocksLong() * stat.getBlockSizeLong();
   }
 
 }

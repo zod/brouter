@@ -30,55 +30,47 @@ import java.util.Set;
 
 import btools.router.OsmNodeNamed;
 
-public class BRouterMainActivity extends Activity
-{
+public class BRouterMainActivity extends Activity {
 
-  public boolean checkSelfPermission (Context context, String perm ) {
+  public boolean checkSelfPermission(Context context, String perm) {
     return true;
   }
 
-  public String getStorageState(File f ) {
+  public String getStorageState(File f) {
     return Environment.getExternalStorageState();
   }
 
   public ArrayList<File> getStorageDirectories() {
     List<String> list = getFilesDirs();
     ArrayList<File> flist = new ArrayList<>();
-    for (String s: list) {
+    for (String s : list) {
       File f = new File(s);
       flist.add(f);
     }
     return flist;
   }
 
-  private List<String> getFilesDirs()
-  {
+  private List<String> getFilesDirs() {
     ArrayList<String> res = new ArrayList<String>();
 
     // check write access on internal sd
-    try
-    {
+    try {
       File sd = Environment.getExternalStorageDirectory();
-      File testDir = new File( sd, "brouter" );
+      File testDir = new File(sd, "brouter");
       boolean didExist = testDir.isDirectory();
-      if ( !didExist )
-      {
+      if (!didExist) {
         testDir.mkdir();
       }
-      File testFile = new File( testDir, "test" + System.currentTimeMillis() );
+      File testFile = new File(testDir, "test" + System.currentTimeMillis());
       testFile.createNewFile();
-      if ( testFile.exists() )
-      {
+      if (testFile.exists()) {
         testFile.delete();
-        res.add( sd.getPath() );
+        res.add(sd.getPath());
       }
-      if ( !didExist )
-      {
+      if (!didExist) {
         testDir.delete();
       }
-    }
-    catch( Throwable t )
-    {
+    } catch (Throwable t) {
       // ignore
     }
 
