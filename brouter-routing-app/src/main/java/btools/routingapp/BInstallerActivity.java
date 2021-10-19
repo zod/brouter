@@ -1,9 +1,5 @@
 package btools.routingapp;
 
-import java.util.HashSet;
-import java.util.Set;
-
-import android.app.Activity;
 import android.app.AlertDialog;
 import android.app.Dialog;
 import android.content.BroadcastReceiver;
@@ -15,9 +11,9 @@ import android.content.pm.ActivityInfo;
 import android.os.Bundle;
 import android.os.PowerManager;
 import android.os.PowerManager.WakeLock;
-import android.speech.tts.TextToSpeech.OnInitListener;
-import android.os.StatFs;
-import android.util.Log;
+
+import java.util.HashSet;
+import java.util.Set;
 
 public class BInstallerActivity extends BInstallerMainActivity {
 
@@ -29,20 +25,7 @@ public class BInstallerActivity extends BInstallerMainActivity {
   private PowerManager mPowerManager;
   private WakeLock mWakeLock;
   private DownloadReceiver myReceiver;
-
-
-  public class DownloadReceiver extends BroadcastReceiver {
-
-    @Override
-    public void onReceive(Context context, Intent intent) {
-      if (intent.hasExtra("txt")) {
-        String txt = intent.getStringExtra("txt");
-        boolean ready = intent.getBooleanExtra("ready", false);
-        mBInstallerView.setState(txt, ready);
-      }
-    }
-  }
-
+  private final Set<Integer> dialogIds = new HashSet<Integer>();
 
   /**
    * Called when the activity is first created.
@@ -133,14 +116,24 @@ public class BInstallerActivity extends BInstallerMainActivity {
     showDialog(DIALOG_CONFIRM_DELETE_ID);
   }
 
-  private Set<Integer> dialogIds = new HashSet<Integer>();
-
   private void showNewDialog(int id) {
     if (dialogIds.contains(Integer.valueOf(id))) {
       removeDialog(id);
     }
     dialogIds.add(Integer.valueOf(id));
     showDialog(id);
+  }
+
+  public class DownloadReceiver extends BroadcastReceiver {
+
+    @Override
+    public void onReceive(Context context, Intent intent) {
+      if (intent.hasExtra("txt")) {
+        String txt = intent.getStringExtra("txt");
+        boolean ready = intent.getBooleanExtra("ready", false);
+        mBInstallerView.setState(txt, ready);
+      }
+    }
   }
 
 
