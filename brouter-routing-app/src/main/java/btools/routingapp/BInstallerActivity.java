@@ -27,9 +27,6 @@ public class BInstallerActivity extends BInstallerMainActivity {
   private DownloadReceiver myReceiver;
   private final Set<Integer> dialogIds = new HashSet<>();
 
-  /**
-   * Called when the activity is first created.
-   */
   @Override
   @SuppressWarnings("deprecation")
   public void onCreate(Bundle savedInstanceState) {
@@ -44,7 +41,6 @@ public class BInstallerActivity extends BInstallerMainActivity {
 
     setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_LANDSCAPE);
 
-    // instantiate our simulation view and set it as the activity's content
     mBInstallerView = new BInstallerView(this);
     setContentView(mBInstallerView);
   }
@@ -64,9 +60,6 @@ public class BInstallerActivity extends BInstallerMainActivity {
 
     myReceiver = new DownloadReceiver();
     registerReceiver(myReceiver, filter);
-
-    // Start the download manager
-    mBInstallerView.startInstaller();
   }
 
   @Override
