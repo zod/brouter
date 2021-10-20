@@ -8,7 +8,9 @@ import android.graphics.Canvas;
 import android.graphics.Color;
 import android.graphics.Matrix;
 import android.graphics.Paint;
+import android.view.GestureDetector;
 import android.view.MotionEvent;
+import android.view.ScaleGestureDetector;
 import android.view.View;
 
 import java.io.File;
@@ -21,6 +23,7 @@ public class BInstallerView extends View {
   private static final int MASK_DELETED_RD5 = 2;
   private static final int MASK_INSTALLED_RD5 = 4;
   private static final int MASK_CURRENT_RD5 = 8;
+  private static final float SCALE_GRID_VISIBLE = 3;
   public static boolean downloadCanceled = false;
   Paint pnt_1 = new Paint();
   Paint pnt_2 = new Paint();
@@ -49,6 +52,9 @@ public class BInstallerView extends View {
   private final Matrix mat;
   private final Matrix matText;
   private OnClickListener mOnClickListener;
+  private final GestureDetector mGestureDetector;
+  private final ScaleGestureDetector mScaleGestureDetector;
+
 
   public BInstallerView(Context context) {
     super(context);
@@ -65,6 +71,98 @@ public class BInstallerView extends View {
     tileStatus = new int[72 * 36];
     matText = new Matrix();
     mat = new Matrix();
+    mGestureDetector = new GestureDetector(context, new GestureListener());
+    mScaleGestureDetector = new ScaleGestureDetector(context, new ScaleGestureListener());
+  }
+
+  class GestureListener extends GestureDetector.SimpleOnGestureListener {
+
+    @Override
+    public boolean onSingleTapConfirmed(MotionEvent e) {
+      // Download Button
+      if ((delTiles > 0 || rd5Tiles >= 0 || isDownloading) && e.getX() > imgwOrig - btnw * scaleOrig && e.getY() > imghOrig - btnh * scaleOrig) {
+        if (mOnClickListener != null) {
+          mOnClickListener.onClick(null);
+        }
+        invalidate();
+        return true;
+      }
+
+      if (tilesVisible) {
+        Matrix imat = new Matrix();
+        if (mat.invert(imat)) {
+          float[] touchpoint = {e.getX(), e.getY()};
+          imat.mapPoints(touchpoint);
+
+          int tidx = tileIndex(touchpoint[0], touchpoint[1]);
+          if (tidx != -1) {
+            if ((tileStatus[tidx] & MASK_SELECTED_RD5) != 0) {
+              tileStatus[tidx] ^= MASK_SELECTED_RD5;
+              if ((tileStatus[tidx] & MASK_INSTALLED_RD5) != 0) {
+                tileStatus[tidx] |= MASK_DELETED_RD5;
+              }
+            } else if ((tileStatus[tidx] & MASK_DELETED_RD5) != 0) {
+              tileStatus[tidx] ^= MASK_DELETED_RD5;
+            } else {
+              tileStatus[tidx] ^= MASK_SELECTED_RD5;
+            }
+          }
+
+          tx = touchpoint[0];
+          ty = touchpoint[1];
+        }
+        invalidate();
+      }
+      return true;
+    }
+
+    @Override
+    public boolean onDoubleTap(MotionEvent e) {
+      if (!tilesVisible) {
+        setScale(5, e.getX(), e.getY());
+      } else {
+        setScale(1, e.getX(), e.getY());
+      }
+      return true;
+    }
+
+    @Override
+    public boolean onScroll(MotionEvent e1, MotionEvent e2, float distanceX, float distanceY) {
+      mat.postTranslate(-distanceX, -distanceY);
+      invalidate();
+      return true;
+    }
+  }
+
+  class ScaleGestureListener implements ScaleGestureDetector.OnScaleGestureListener {
+
+    @Override
+    public boolean onScaleBegin(ScaleGestureDetector scaleGestureDetector) {
+      return true;
+    }
+
+    @Override
+    public boolean onScale(ScaleGestureDetector scaleGestureDetector) {
+      float focusX = scaleGestureDetector.getFocusX();
+      float focusY = scaleGestureDetector.getFocusY();
+      float ratio = scaleGestureDetector.getScaleFactor();
+
+      setScale(ratio, focusX, focusY);
+
+      return true;
+    }
+
+    @Override
+    public void onScaleEnd(ScaleGestureDetector scaleGestureDetector) {
+    }
+  }
+
+  private void setScale(float scale, float focusX, float focusY) {
+    float ratio = scale / currentScale();
+    mat.postScale(ratio, ratio, focusX, focusY);
+    tilesVisible = currentScale() >= SCALE_GRID_VISIBLE;
+
+    invalidate();
   }
 
   public void setAvailableSize(long availableSize) {
@@ -277,140 +375,9 @@ public class BInstallerView extends View {
 
   @Override
   public boolean onTouchEvent(MotionEvent event) {
-
-    // get masked (not specific to a pointer) action
-    int maskedAction = event.getActionMasked();
-
-    switch (maskedAction) {
-
-      case MotionEvent.ACTION_DOWN:
-      case MotionEvent.ACTION_POINTER_DOWN: {
-        lastDownX = event.getX();
-        lastDownY = event.getY();
-
-        break;
-      }
-      case MotionEvent.ACTION_MOVE: { // a pointer was moved
-
-        if (isDownloading) break;
-        int np = event.getPointerCount();
-        int nh = event.getHistorySize();
-        if (nh == 0) break;
-
-        float x0 = event.getX(0);
-        float y0 = event.getY(0);
-        float hx0 = event.getHistoricalX(0, 0);
-        float hy0 = event.getHistoricalY(0, 0);
-
-        if (np > 1) // multi-touch
-        {
-          float x1 = event.getX(1);
-          float y1 = event.getY(1);
-          float hx1 = event.getHistoricalX(1, 0);
-          float hy1 = event.getHistoricalY(1, 0);
-
-          float r = (float) Math.sqrt((x1 - x0) * (x1 - x0) + (y1 - y0) * (y1 - y0));
-          float hr = (float) Math.sqrt((hx1 - hx0) * (hx1 - hx0) + (hy1 - hy0) * (hy1 - hy0));
-
-          if (hr > 0.) {
-            float ratio = r / hr;
-
-            float mx = (x1 + x0) / 2.f;
-            float my = (y1 + y0) / 2.f;
-
-            float scale = currentScale();
-            float newscale = scale * ratio;
-
-            if (newscale > 10.f) ratio *= (10.f / newscale);
-            if (newscale < 0.5f) ratio *= (0.5f / newscale);
-
-            mat.postScale(ratio, ratio, mx, my);
-
-            mat.postScale(ratio, ratio, mx, my);
-
-            boolean tilesv = currentScale() >= 3.f;
-            if (tilesVisible && !tilesv) {
-              clearAllTilesStatus(MASK_SELECTED_RD5 | MASK_DELETED_RD5);
-            }
-            tilesVisible = tilesv;
-          }
-
-          break;
-        }
-        mat.postTranslate(x0 - hx0, y0 - hy0);
-
-        break;
-      }
-      case MotionEvent.ACTION_UP:
-
-        long downTime = event.getEventTime() - event.getDownTime();
-
-        if (downTime < 5 || downTime > 500) {
-          break;
-        }
-
-        if (Math.abs(lastDownX - event.getX()) > 10 || Math.abs(lastDownY - event.getY()) > 10) {
-          break;
-        }
-
-        // download button?
-        if ((delTiles > 0 || rd5Tiles >= 0 || isDownloading) && event.getX() > imgwOrig - btnw * scaleOrig && event.getY() > imghOrig - btnh * scaleOrig) {
-          if (mOnClickListener != null) {
-            mOnClickListener.onClick(null);
-          }
-          invalidate();
-          break;
-        }
-
-        if (!tilesVisible) {
-          float scale = currentScale();
-          if (scale > 0f && scale < 5f) {
-            float ratio = 5f / scale;
-            mat.postScale(ratio, ratio, event.getX(), event.getY());
-            tilesVisible = true;
-          }
-          break;
-        }
-
-        if (isDownloading) break;
-
-        Matrix imat = new Matrix();
-        if (mat.invert(imat)) {
-          float[] touchpoint = new float[2];
-          touchpoint[0] = event.getX();
-          touchpoint[1] = event.getY();
-          imat.mapPoints(touchpoint);
-
-          int tidx = tileIndex(touchpoint[0], touchpoint[1]);
-          if (tidx != -1) {
-            if ((tileStatus[tidx] & MASK_SELECTED_RD5) != 0) {
-              tileStatus[tidx] ^= MASK_SELECTED_RD5;
-              if ((tileStatus[tidx] & MASK_INSTALLED_RD5) != 0) {
-                tileStatus[tidx] |= MASK_DELETED_RD5;
-              }
-            } else if ((tileStatus[tidx] & MASK_DELETED_RD5) != 0) {
-              tileStatus[tidx] ^= MASK_DELETED_RD5;
-            } else {
-              tileStatus[tidx] ^= MASK_SELECTED_RD5;
-            }
-          }
-
-          tx = touchpoint[0];
-          ty = touchpoint[1];
-        }
-
-
-        break;
-      case MotionEvent.ACTION_POINTER_UP:
-      case MotionEvent.ACTION_CANCEL: {
-        // TODO use data
-        break;
-      }
-    }
-    invalidate();
-
-    return true;
+    boolean retVal = mScaleGestureDetector.onTouchEvent(event);
+    retVal = mGestureDetector.onTouchEvent(event) || retVal;
+    return retVal || super.onTouchEvent(event);
   }
-
 
 }
