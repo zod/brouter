@@ -1,6 +1,5 @@
 package btools.routingapp;
 
-import android.app.Activity;
 import android.content.Context;
 import android.content.res.AssetManager;
 import android.graphics.Bitmap;
@@ -9,7 +8,6 @@ import android.graphics.Canvas;
 import android.graphics.Color;
 import android.graphics.Matrix;
 import android.graphics.Paint;
-import android.util.DisplayMetrics;
 import android.view.MotionEvent;
 import android.view.View;
 
@@ -30,20 +28,19 @@ public class BInstallerView extends View {
   int btnh = 40;
   int btnw = 160;
   float tx, ty;
-  private final int imgwOrig;
-  private final int imghOrig;
-  private final float scaleOrig;
-  private final int imgw;
-  private final int imgh;
+  private int imgwOrig;
+  private int imghOrig;
+  private float scaleOrig;
+  private int imgw;
+  private int imgh;
   private float lastDownX;
   private float lastDownY;
   private final Bitmap bmp;
-  private final float viewscale;
+  private float viewscale;
   private final float[] testVector = new float[2];
   private final int[] tileStatus;
   private boolean tilesVisible = false;
   private long mAvailableSize;
-  private final File baseDir;
   private boolean isDownloading = false;
   private volatile String currentDownloadOperation = "";
   private long totalSize = 0;
@@ -56,22 +53,6 @@ public class BInstallerView extends View {
   public BInstallerView(Context context) {
     super(context);
 
-    DisplayMetrics metrics = new DisplayMetrics();
-    ((Activity) getContext()).getWindowManager().getDefaultDisplay().getMetrics(metrics);
-    imgwOrig = metrics.widthPixels;
-    imghOrig = metrics.heightPixels;
-    int im = Math.max(imgwOrig, imghOrig);
-
-    scaleOrig = im / 480.f;
-
-    matText = new Matrix();
-    matText.preScale(scaleOrig, scaleOrig);
-
-    imgw = (int) (imgwOrig / scaleOrig);
-    imgh = (int) (imghOrig / scaleOrig);
-
-    baseDir = ConfigHelper.getBaseDir(getContext());
-
     try {
       AssetManager assetManager = getContext().getAssets();
       InputStream istr = assetManager.open("world.png");
@@ -82,14 +63,8 @@ public class BInstallerView extends View {
     }
 
     tileStatus = new int[72 * 36];
-
-    float scaleX = imgwOrig / ((float) bmp.getWidth());
-    float scaley = imghOrig / ((float) bmp.getHeight());
-
-    viewscale = Math.min(scaleX, scaley);
-
+    matText = new Matrix();
     mat = new Matrix();
-    mat.postScale(viewscale, viewscale);
   }
 
   public void setAvailableSize(long availableSize) {
@@ -159,6 +134,25 @@ public class BInstallerView extends View {
   @Override
   protected void onSizeChanged(int w, int h, int oldw, int oldh) {
     super.onSizeChanged(w, h, oldw, oldh);
+
+    imgwOrig = getWidth();
+    imghOrig = getHeight();
+    int im = Math.max(imgwOrig, imghOrig);
+
+    scaleOrig = im / 480.f;
+
+    matText.preScale(scaleOrig, scaleOrig);
+
+    imgw = (int) (imgwOrig / scaleOrig);
+    imgh = (int) (imghOrig / scaleOrig);
+
+    float scaleX = imgwOrig / ((float) bmp.getWidth());
+    float scaley = imghOrig / ((float) bmp.getHeight());
+
+    viewscale = Math.min(scaleX, scaley);
+
+    mat.postScale(viewscale, viewscale);
+    tilesVisible = false;
   }
 
   @Override
