@@ -1,13 +1,5 @@
 package btools.routingapp;
 
-import java.io.File;
-import java.text.DecimalFormat;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Set;
-
 import android.app.ActivityManager;
 import android.app.AlertDialog;
 import android.app.Dialog;
@@ -25,6 +17,13 @@ import android.os.PowerManager.WakeLock;
 import android.os.StatFs;
 import android.widget.EditText;
 
+import java.io.File;
+import java.text.DecimalFormat;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
 
 import btools.router.OsmNodeNamed;
 
@@ -47,10 +46,26 @@ public class BRouterActivity extends BRouterMainActivity {
   private static final int DIALOG_SHOW_WP_SCANRESULT_ID = 15;
   private static final int DIALOG_SHOW_REPEAT_TIMEOUT_HELP_ID = 16;
   private static final int DIALOG_SHOW_API23_HELP_ID = 17;
-
-
+  private final Set<Integer> dialogIds = new HashSet<>();
   private BRouterView mBRouterView;
   private WakeLock mWakeLock;
+  private String[] availableProfiles;
+  private String selectedProfile = null;
+  private List<File> availableBasedirs;
+  private String[] basedirOptions;
+  private int selectedBasedir;
+  private String[] availableWaypoints;
+  private String[] routingModes;
+  private boolean[] routingModesChecked;
+  private String defaultbasedir = null;
+  private String message = null;
+  private String[] availableVias;
+  private Set<String> selectedVias;
+  private List<OsmNodeNamed> nogoList;
+  private String maptoolDirCandidate;
+  private String errorMessage;
+  private String title;
+  private int wpCount;
 
   /**
    * Called when the activity is first created.
@@ -356,28 +371,6 @@ public class BRouterActivity extends BRouterMainActivity {
     return checked;
   }
 
-  private String[] availableProfiles;
-  private String selectedProfile = null;
-
-  private List<File> availableBasedirs;
-  private String[] basedirOptions;
-  private int selectedBasedir;
-
-  private String[] availableWaypoints;
-
-  private String[] routingModes;
-  private boolean[] routingModesChecked;
-
-  private String defaultbasedir = null;
-  private String message = null;
-
-  private String[] availableVias;
-  private Set<String> selectedVias;
-
-  private List<OsmNodeNamed> nogoList;
-
-  private String maptoolDirCandidate;
-
   public boolean isOnline(Context context) {
     boolean result = false;
     ConnectivityManager connectivityManager = (ConnectivityManager) context.getSystemService(Context.CONNECTIVITY_SERVICE);
@@ -491,8 +484,6 @@ public class BRouterActivity extends BRouterMainActivity {
     showDialog(DIALOG_NOGOSELECT_ID);
   }
 
-  private final Set<Integer> dialogIds = new HashSet<>();
-
   private void showNewDialog(int id) {
     if (dialogIds.contains(id)) {
       removeDialog(id);
@@ -500,10 +491,6 @@ public class BRouterActivity extends BRouterMainActivity {
     dialogIds.add(id);
     showDialog(id);
   }
-
-  private String errorMessage;
-  private String title;
-  private int wpCount;
 
   public void showErrorMessage(String msg) {
     errorMessage = msg;

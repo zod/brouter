@@ -43,10 +43,11 @@ import btools.router.RoutingHelper;
 import btools.util.CheapRuler;
 
 public class BRouterView extends View {
+  private final int memoryClass;
+  public boolean canAccessSdCard;
   RoutingEngine cr;
   private int imgw;
   private int imgh;
-
   private int centerLon;
   private int centerLat;
   private double scaleLon;  // ilon -> pixel
@@ -56,7 +57,6 @@ public class BRouterView extends View {
   private List<OsmNodeNamed> nogoList;
   private List<OsmNodeNamed> nogoVetoList;
   private OsmTrack rawTrack;
-
   private File retryBaseDir;
   private File modesDir;
   private File tracksDir;
@@ -68,30 +68,23 @@ public class BRouterView extends View {
   private boolean waitingForMigration = false;
   private String rawTrackPath;
   private String oldMigrationPath;
-
   private boolean needsViaSelection;
   private boolean needsNogoSelection;
   private boolean needsWaypointSelection;
-
   private WpDatabaseScanner dataBaseScanner;
-
   private long lastDataTime = System.currentTimeMillis();
-
   private CoordinateReader cor;
-
   private int[] imgPixels;
-
-  private final int memoryClass;
-
-  public boolean canAccessSdCard;
-
-  public void stopRouting() {
-    if (cr != null) cr.terminate();
-  }
+  private long lastTs = System.currentTimeMillis();
+  private long startTime = 0L;
 
   public BRouterView(Context context, int memoryClass) {
     super(context);
     this.memoryClass = memoryClass;
+  }
+
+  public void stopRouting() {
+    if (cr != null) cr.terminate();
   }
 
   public void init() {
@@ -683,9 +676,6 @@ public class BRouterView extends View {
     Toast.makeText(getContext(), msg, Toast.LENGTH_LONG).show();
     lastDataTime += 4000; // give time for the toast before exiting
   }
-
-  private long lastTs = System.currentTimeMillis();
-  private long startTime = 0L;
 
   @Override
   protected void onDraw(Canvas canvas) {
