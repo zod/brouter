@@ -1,7 +1,6 @@
 package btools.routingapp;
 
 import java.io.File;
-import java.lang.reflect.Method;
 import java.text.DecimalFormat;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -9,27 +8,21 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
-import android.app.Activity;
 import android.app.ActivityManager;
 import android.app.AlertDialog;
 import android.app.Dialog;
 import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
-import android.content.pm.PackageManager;
 import android.net.ConnectivityManager;
 import android.net.Network;
 import android.net.NetworkCapabilities;
 import android.net.NetworkInfo;
 import android.os.Build;
 import android.os.Bundle;
-import android.os.Environment;
 import android.os.PowerManager;
 import android.os.PowerManager.WakeLock;
 import android.os.StatFs;
-import android.speech.tts.TextToSpeech.OnInitListener;
-import android.util.Log;
-import android.view.KeyEvent;
 import android.widget.EditText;
 
 
@@ -57,19 +50,17 @@ public class BRouterActivity extends BRouterMainActivity {
 
 
   private BRouterView mBRouterView;
-  private PowerManager mPowerManager;
   private WakeLock mWakeLock;
 
   /**
    * Called when the activity is first created.
    */
   @Override
-  @SuppressWarnings("deprecation")
   public void onCreate(Bundle savedInstanceState) {
     super.onCreate(savedInstanceState);
 
     // Get an instance of the PowerManager
-    mPowerManager = (PowerManager) getSystemService(POWER_SERVICE);
+    PowerManager mPowerManager = (PowerManager) getSystemService(POWER_SERVICE);
 
     // Create a bright wake lock
     mWakeLock = mPowerManager.newWakeLock(PowerManager.SCREEN_BRIGHT_WAKE_LOCK, getClass().getName());
@@ -84,7 +75,6 @@ public class BRouterActivity extends BRouterMainActivity {
   }
 
   @Override
-  @SuppressWarnings("deprecation")
   protected Dialog onCreateDialog(int id) {
     AlertDialog.Builder builder;
     builder = new AlertDialog.Builder(this);
@@ -362,7 +352,7 @@ public class BRouterActivity extends BRouterMainActivity {
 
   private boolean[] getCheckedBooleanArray(int size) {
     boolean[] checked = new boolean[size];
-    for (int i = 0; i < checked.length; i++) checked[i] = true;
+    Arrays.fill(checked, true);
     return checked;
   }
 
@@ -411,7 +401,6 @@ public class BRouterActivity extends BRouterMainActivity {
     return result;
   }
 
-  @SuppressWarnings("deprecation")
   public void selectProfile(String[] items) {
     availableProfiles = items;
 
@@ -423,7 +412,6 @@ public class BRouterActivity extends BRouterMainActivity {
     }
   }
 
-  @SuppressWarnings("deprecation")
   public void startDownloadManager() {
     if (!mBRouterView.hasUpToDateLookups()) {
       showDialog(DIALOG_OLDDATAHINT_ID);
@@ -432,19 +420,18 @@ public class BRouterActivity extends BRouterMainActivity {
     }
   }
 
-  @SuppressWarnings("deprecation")
   public void selectBasedir(ArrayList<File> items, String defaultBasedir, String message) {
     this.defaultbasedir = defaultBasedir;
     this.message = message;
     availableBasedirs = items;
-    ArrayList<Long> dirFreeSizes = new ArrayList<Long>();
+    ArrayList<Long> dirFreeSizes = new ArrayList<>();
     for (File f : items) {
       long size = 0L;
       try {
         StatFs stat = new StatFs(f.getAbsolutePath());
         size = (long) stat.getAvailableBlocks() * stat.getBlockSize();
       } catch (Exception e) { /* ignore */ }
-      dirFreeSizes.add(Long.valueOf(size));
+      dirFreeSizes.add(size);
     }
 
     basedirOptions = new String[items.size() + 1];
@@ -458,7 +445,6 @@ public class BRouterActivity extends BRouterMainActivity {
     showDialog(DIALOG_SELECTBASEDIR_ID);
   }
 
-  @SuppressWarnings("deprecation")
   public void selectRoutingModes(String[] modes, boolean[] modesChecked, String message) {
     routingModes = modes;
     routingModesChecked = modesChecked;
@@ -466,28 +452,23 @@ public class BRouterActivity extends BRouterMainActivity {
     showDialog(DIALOG_ROUTINGMODES_ID);
   }
 
-  @SuppressWarnings("deprecation")
   public void showModeConfigOverview(String message) {
     this.message = message;
     showDialog(DIALOG_MODECONFIGOVERVIEW_ID);
   }
 
-  @SuppressWarnings("deprecation")
   public void selectVias(String[] items) {
     availableVias = items;
-    selectedVias = new HashSet<String>(availableVias.length);
-    for (String via : items)
-      selectedVias.add(via);
+    selectedVias = new HashSet<>(availableVias.length);
+    selectedVias.addAll(Arrays.asList(items));
     showDialog(DIALOG_VIASELECT_ID);
   }
 
-  @SuppressWarnings("deprecation")
   public void selectWaypoint(String[] items) {
     availableWaypoints = items;
     showNewDialog(DIALOG_PICKWAYPOINT_ID);
   }
 
-  @SuppressWarnings("deprecation")
   public void showWaypointDatabaseHelp() {
     if (mBRouterView.canAccessSdCard) {
       showNewDialog(DIALOG_SHOW_WP_HELP_ID);
@@ -496,30 +477,27 @@ public class BRouterActivity extends BRouterMainActivity {
     }
   }
 
-  @SuppressWarnings("deprecation")
   public void showRepeatTimeoutHelp() {
     showNewDialog(DIALOG_SHOW_REPEAT_TIMEOUT_HELP_ID);
   }
 
-  @SuppressWarnings("deprecation")
   public void showWpDatabaseScanSuccess(String bestGuess) {
     maptoolDirCandidate = bestGuess;
     showNewDialog(DIALOG_SHOW_WP_SCANRESULT_ID);
   }
 
-  @SuppressWarnings("deprecation")
   public void selectNogos(List<OsmNodeNamed> nogoList) {
     this.nogoList = nogoList;
     showDialog(DIALOG_NOGOSELECT_ID);
   }
 
-  private Set<Integer> dialogIds = new HashSet<Integer>();
+  private final Set<Integer> dialogIds = new HashSet<>();
 
   private void showNewDialog(int id) {
-    if (dialogIds.contains(Integer.valueOf(id))) {
+    if (dialogIds.contains(id)) {
       removeDialog(id);
     }
-    dialogIds.add(Integer.valueOf(id));
+    dialogIds.add(id);
     showDialog(id);
   }
 
@@ -527,13 +505,11 @@ public class BRouterActivity extends BRouterMainActivity {
   private String title;
   private int wpCount;
 
-  @SuppressWarnings("deprecation")
   public void showErrorMessage(String msg) {
     errorMessage = msg;
     showNewDialog(DIALOG_EXCEPTION_ID);
   }
 
-  @SuppressWarnings("deprecation")
   public void showResultMessage(String title, String msg, int wpCount) {
     errorMessage = msg;
     this.title = title;

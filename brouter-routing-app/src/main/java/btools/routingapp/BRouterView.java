@@ -1,10 +1,22 @@
 package btools.routingapp;
 
+import android.Manifest;
+import android.app.Activity;
+import android.content.Context;
+import android.content.res.AssetManager;
+import android.graphics.Canvas;
+import android.graphics.Color;
+import android.graphics.Paint;
+import android.os.Environment;
+import android.util.DisplayMetrics;
+import android.util.Log;
+import android.view.View;
+import android.widget.Toast;
+
 import java.io.BufferedReader;
 import java.io.BufferedWriter;
 import java.io.File;
 import java.io.FileInputStream;
-import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.FileReader;
 import java.io.FileWriter;
@@ -12,33 +24,13 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.OutputStream;
-import java.lang.reflect.Method;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
 import java.util.Set;
-import java.util.StringTokenizer;
 import java.util.TreeMap;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipInputStream;
 
-import android.Manifest;
-import android.app.Activity;
-import android.content.Context;
-import android.content.pm.PackageManager;
-import android.content.res.AssetManager;
-import android.graphics.Canvas;
-import android.graphics.Color;
-import android.graphics.Paint;
-import android.os.Build;
-import android.os.Environment;
-import android.util.DisplayMetrics;
-import android.util.Log;
-import android.view.View;
-import android.widget.Toast;
-
-
-import btools.expressions.BExpressionContextWay;
 import btools.expressions.BExpressionMetaData;
 import btools.mapaccess.OsmNode;
 import btools.router.OsmNodeNamed;
@@ -70,7 +62,6 @@ public class BRouterView extends View {
   private File tracksDir;
   private File segmentDir;
   private File profileDir;
-  private String profilePath;
   private String profileName;
   private String sourceHint;
   private boolean waitingForSelection = false;
@@ -90,7 +81,7 @@ public class BRouterView extends View {
 
   private int[] imgPixels;
 
-  private int memoryClass;
+  private final int memoryClass;
 
   public boolean canAccessSdCard;
 
@@ -220,7 +211,7 @@ public class BRouterView extends View {
 
       wpList = cor.waypoints;
       nogoList = cor.nogopoints;
-      nogoVetoList = new ArrayList<OsmNodeNamed>();
+      nogoVetoList = new ArrayList<>();
 
       sourceHint = "(dev/trgt=" + deviceLevel + "/" + targetSdkVersion + " coordinate-source: " + cor.basedir + cor.rootdir + ")";
 
@@ -256,7 +247,7 @@ public class BRouterView extends View {
       }
 
       String[] fileNames = profileDir.list();
-      ArrayList<String> profiles = new ArrayList<String>();
+      ArrayList<String> profiles = new ArrayList<>();
 
       boolean lookupsFound = false;
       for (String fileName : fileNames) {
@@ -322,8 +313,8 @@ public class BRouterView extends View {
 
   private void moveFile(String inputPath, String inputFile, String outputPath) {
 
-    InputStream in = null;
-    OutputStream out = null;
+    InputStream in;
+    OutputStream out;
     try {
 
       //create output directory if it doesn't exist
@@ -353,10 +344,8 @@ public class BRouterView extends View {
       new File(inputPath + "/" + inputFile).delete();
 
 
-    } catch (FileNotFoundException fnfe1) {
+    } catch (Exception fnfe1) {
       Log.e("tag", fnfe1.getMessage());
-    } catch (Exception e) {
-      Log.e("tag", e.getMessage());
     }
 
   }
@@ -373,7 +362,7 @@ public class BRouterView extends View {
   }
 
   public void updateViaList(Set<String> selectedVias) {
-    ArrayList<OsmNodeNamed> filtered = new ArrayList<OsmNodeNamed>(wpList.size());
+    ArrayList<OsmNodeNamed> filtered = new ArrayList<>(wpList.size());
     for (OsmNodeNamed n : wpList) {
       String name = n.name;
       if ("from".equals(name) || "to".equals(name) || selectedVias.contains(name))
@@ -450,7 +439,7 @@ public class BRouterView extends View {
 
   private List<OsmNodeNamed> readWpList(BufferedReader br, boolean isNogo) throws Exception {
     int cnt = Integer.parseInt(br.readLine());
-    List<OsmNodeNamed> res = new ArrayList<OsmNodeNamed>(cnt);
+    List<OsmNodeNamed> res = new ArrayList<>(cnt);
     for (int i = 0; i < cnt; i++) {
       OsmNodeNamed wp = OsmNodeNamed.decodeNogo(br.readLine());
       wp.isNogo = isNogo;
@@ -479,7 +468,7 @@ public class BRouterView extends View {
       rawTrackPath = modesDir + "/remote_rawtrack.dat";
     }
 
-    profilePath = profileDir + "/" + profile + ".brf";
+    String profilePath = profileDir + "/" + profile + ".brf";
     profileName = profile;
 
     if (needsViaSelection) {
@@ -650,7 +639,7 @@ public class BRouterView extends View {
     int ir = (int) (n.radius * scaleMeter2Pixel);
     if (ir > minradius) {
       Paint paint = new Paint();
-      paint.setColor(Color.RED);
+      paint.setColor(color);
       paint.setStyle(Paint.Style.STROKE);
       canvas.drawCircle((float) x, (float) y, (float) ir, paint);
     }
@@ -861,7 +850,7 @@ public class BRouterView extends View {
     File basedir = Environment.getExternalStorageDirectory();
     try {
       File bd2 = new File(basedir, "external_sd");
-      ArrayList<String> basedirGuesses = new ArrayList<String>();
+      ArrayList<String> basedirGuesses = new ArrayList<>();
       basedirGuesses.add(basedir.getAbsolutePath());
 
       if (bd2.exists()) {
@@ -869,7 +858,7 @@ public class BRouterView extends View {
         basedirGuesses.add(basedir.getAbsolutePath());
       }
 
-      ArrayList<CoordinateReader> rl = new ArrayList<CoordinateReader>();
+      ArrayList<CoordinateReader> rl = new ArrayList<>();
       for (String bdg : basedirGuesses) {
         rl.add(new CoordinateReaderOsmAnd(bdg));
         rl.add(new CoordinateReaderLocus(bdg));
@@ -920,7 +909,7 @@ public class BRouterView extends View {
 
   public void configureService(String[] routingModes, boolean[] checkedModes) {
     // read in current config
-    TreeMap<String, ServiceModeConfig> map = new TreeMap<String, ServiceModeConfig>();
+    TreeMap<String, ServiceModeConfig> map = new TreeMap<>();
     BufferedReader br = null;
     String modesFile = modesDir + "/serviceconfig.dat";
     try {
