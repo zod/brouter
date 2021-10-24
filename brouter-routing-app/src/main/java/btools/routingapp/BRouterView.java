@@ -135,10 +135,9 @@ public class BRouterView extends View {
 
   @Override
   protected void onSizeChanged(int w, int h, int oldw, int oldh) {
-    DisplayMetrics metrics = new DisplayMetrics();
-    ((Activity) getContext()).getWindowManager().getDefaultDisplay().getMetrics(metrics);
-    imgw = metrics.widthPixels;
-    imgh = metrics.heightPixels;
+    super.onSizeChanged(w, h, oldw, oldh);
+    imgw = w;
+    imgh = h;
   }
 
   private void showDatabaseScanning(Canvas canvas) {
