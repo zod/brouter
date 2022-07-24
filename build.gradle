@@ -49,6 +49,23 @@ allprojects {
     apply plugin: "checkstyle"
 }
 
+// jacoco plugin depends on loaded java/java-library plugin specified in children's build.gradle
+evaluationDependsOnChildren()
+
+subprojects {
+    apply plugin: "jacoco"
+
+    jacocoTestReport {
+        reports {
+            csv.enabled true
+        }
+    }
+
+    test {
+        finalizedBy jacocoTestReport // report is always generated after tests run
+    }
+}
+
 task clean(type: Delete) {
     delete rootProject.buildDir
 }
