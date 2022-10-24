@@ -5,7 +5,7 @@ name: Java CI with Gradle
 
 on:
   push:
-    branches: [ master ]
+    branches: [ coverage ]
   pull_request:
     branches: [ master ]
 
@@ -36,6 +36,22 @@ jobs:
         ORG_GRADLE_PROJECT_RELEASE_KEY_PASSWORD: ${{ secrets.BROUTER_KEY_PASSWORD }}
         ORG_GRADLE_PROJECT_RELEASE_STORE_PASSWORD: ${{ secrets.BROUTER_STORE_PASSWORD }} 
       run: ./gradlew build
+    - name: Generate JaCoCo Badge
+      id: jacoco
+      uses: cicirello/jacoco-badge-generator@v2
+      with:
+        generate-branches-badge: true
+        jacoco-csv-file: >
+          brouter-codec/build/reports/jacoco/test/jacocoTestReport.csv
+          brouter-core/build/reports/jacoco/test/jacocoTestReport.csv
+          brouter-expressions/build/reports/jacoco/test/jacocoTestReport.csv
+          brouter-map-creator/build/reports/jacoco/test/jacocoTestReport.csv
+          brouter-server/build/reports/jacoco/test/jacocoTestReport.csv
+          brouter-util/build/reports/jacoco/test/jacocoTestReport.csv
+    - name: Log coverage information
+      run: |
+        echo "coverage = ${{ steps.jacoco.outputs.coverage }}"
+        echo "branch coverage = ${{ steps.jacoco.outputs.branches }}"
     - name: Upload ZIP
       uses: actions/upload-artifact@v2
       with:
