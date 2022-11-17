@@ -1,0 +1,18 @@
+name: profiles-tester
+
+on:
+  pull_request:
+    branches:
+      - "master"
+    paths:
+      - '**.brf'
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v3
+    - run: |
+        echo "https://zod.github.io/brouter-profiles-tester?testsuite=fastbike.json"
+        echo "https://raw.githubusercontent.com/${{ github.event.pull_request.base.repo.full_name }}/${{ github.event.pull_request.base.sha }}/misc/profiles2/fastbike.brf"
+        echo "https://raw.githubusercontent.com/${{ github.event.pull_request.base.repo.full_name }}/${{ github.sha }}/misc/profiles2/fastbike.brf"
