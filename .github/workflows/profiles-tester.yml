@@ -13,4 +13,13 @@ jobs:
     steps:
     - uses: actions/checkout@v3
     - run: |
-        echo "https://zod.github.io/brouter-profiles-tester?testsuite=fastbike.json&profile=https://raw.githubusercontent.com/${{ github.event.pull_request.base.repo.full_name }}/${{ github.sha }}/misc/profiles2/fastbike.brf&referenceProfile=https://raw.githubusercontent.com/${{ github.event.pull_request.base.repo.full_name }}/${{ github.event.pull_request.base.sha }}/misc/profiles2/fastbike.brf"
+        PROFILE_TESTER="https://zod.github.io/brouter-profiles-tester"
+        GITHUB_RAW="https://raw.githubusercontent.com"
+        BASE="${{ github.event.pull_request.base.sha }}"
+        HEAD="${{ github.sha }}"
+        for PROFILE in misc/profiles2/*.brf; do
+            git diff --quiet ${HEAD} ${BASE} $PROFILE || (
+                TESTSUITE=$(basename $PROFILE .brf).json
+                echo "$PROFILE_TESTER/?testsuite=$TESTSUITE&profile=$GITHUB_RAW/$HEAD/$PROFILE&referenceProfile=$GITHUB_RAW/$BASE/$PROFILE"
+            )
+        done
