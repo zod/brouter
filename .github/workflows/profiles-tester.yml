@@ -16,7 +16,7 @@ jobs:
         fetch-depth: 0
     - run: |
         PROFILE_TESTER="https://zod.github.io/brouter-profiles-tester"
-        GITHUB_RAW="https://raw.githubusercontent.com/${{ github.event.pull_request.base.full_name }}"
+        GITHUB_RAW="https://raw.githubusercontent.com/${{ github.event.pull_request.base.repo.full_name }}"
         BASE="${{ github.event.pull_request.base.sha }}"
         HEAD="${{ github.sha }}"
         for PROFILE in misc/profiles2/*.brf; do
