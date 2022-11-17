@@ -12,6 +12,8 @@ jobs:
     runs-on: ubuntu-latest
     steps:
     - uses: actions/checkout@v3
+      with:
+        fetch-depth: 0
     - run: |
         PROFILE_TESTER="https://zod.github.io/brouter-profiles-tester"
         GITHUB_RAW="https://raw.githubusercontent.com"
