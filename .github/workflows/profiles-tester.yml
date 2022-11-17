@@ -29,6 +29,7 @@ jobs:
                 OUTPUT="$OUTPUT$PROFILE_OUTPUT"$'\n'
             fi
         done
+        echo "$OUTPUT"
         # Multiline handling
         OUTPUT="${OUTPUT//'%'/'%25'}"
         OUTPUT="${OUTPUT//$'\n'/'%0A'}"
