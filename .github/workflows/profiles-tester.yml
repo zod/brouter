@@ -19,9 +19,10 @@ jobs:
         GITHUB_RAW="https://raw.githubusercontent.com/${{ github.event.pull_request.base.repo.full_name }}"
         BASE="${{ github.event.pull_request.base.sha }}"
         HEAD="${{ github.sha }}"
+        echo "# profiles-tester" >> $GITHUB_STEP_SUMMARY
         for PROFILE in misc/profiles2/*.brf; do
             git diff --quiet ${HEAD} ${BASE} $PROFILE || (
-                TESTSUITE=$(basename $PROFILE .brf).json
-                echo "$PROFILE_TESTER/?testsuite=$TESTSUITE&profile=$GITHUB_RAW/$HEAD/$PROFILE&referenceProfile=$GITHUB_RAW/$BASE/$PROFILE"
+                PROFILE_BASENAME=$(basename $PROFILE .brf)
+                echo "* [$PROFILE_BASENAME]($PROFILE_TESTER/?testsuite=$PROFILE_BASENAME.json&profile=$GITHUB_RAW/$HEAD/$PROFILE&referenceProfile=$GITHUB_RAW/$BASE/$PROFILE)" >> $GITHUB_STEP_SUMMARY
             )
         done
