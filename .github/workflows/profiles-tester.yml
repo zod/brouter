@@ -34,7 +34,7 @@ jobs:
         OUTPUT="${OUTPUT//'%'/'%25'}"
         OUTPUT="${OUTPUT//$'\n'/'%0A'}"
         OUTPUT="${OUTPUT//$'\r'/'%0D'}"
-        echo "result=$OUTPUT" >> $GITHUB_OUTPUT
+        echo "::set-output name=result::$OUTPUT"
     - uses: marocchino/sticky-pull-request-comment@v2
       with:
         header: profiles-tester
