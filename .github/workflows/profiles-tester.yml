@@ -14,15 +14,30 @@ jobs:
     - uses: actions/checkout@v3
       with:
         fetch-depth: 0
-    - run: |
+    - name: Detect changed profiles
+      id: detect-profiles
+      run: |
         PROFILE_TESTER="https://zod.github.io/brouter-profiles-tester"
         GITHUB_RAW="https://raw.githubusercontent.com/${{ github.event.pull_request.base.repo.full_name }}"
         BASE="${{ github.event.pull_request.base.sha }}"
         HEAD="${{ github.sha }}"
-        echo "# profiles-tester" >> $GITHUB_STEP_SUMMARY
         for PROFILE in misc/profiles2/*.brf; do
-            git diff --quiet ${HEAD} ${BASE} $PROFILE || (
+            if ! git diff --quiet ${HEAD} ${BASE} $PROFILE; then
                 PROFILE_BASENAME=$(basename $PROFILE .brf)
-                echo "* [$PROFILE_BASENAME]($PROFILE_TESTER/?testsuite=$PROFILE_BASENAME.json&profile=$GITHUB_RAW/$HEAD/$PROFILE&referenceProfile=$GITHUB_RAW/$BASE/$PROFILE)" >> $GITHUB_STEP_SUMMARY
-            )
+                # PROFILES+=("$PROFILE_TESTER/?testsuite=$TESTSUITE.json&profile=$GITHUB_RAW/$HEAD/$PROFILE&referenceProfile=$GITHUB_RAW/$BASE/$PROFILE")
+                PROFILE_OUTPUT="* $PROFILE_BASENAME [:left_right_arrow: profiles-tester]($PROFILE_TESTER/?testsuite=$PROFILE_BASENAME.json&profile=$GITHUB_RAW/$HEAD/$PROFILE&referenceProfile=$GITHUB_RAW/$BASE/$PROFILE)"
+                OUTPUT="$OUTPUT$PROFILE_OUTPUT"$'\n'
+            fi
         done
+        # Multiline handling
+        OUTPUT="${OUTPUT//'%'/'%25'}"
+        OUTPUT="${OUTPUT//$'\n'/'%0A'}"
+        OUTPUT="${OUTPUT//$'\r'/'%0D'}"
+        echo "result=$OUTPUT" >> $GITHUB_OUTPUT
+    - uses: marocchino/sticky-pull-request-comment@v2
+      with:
+        header: profiles-tester
+        message: |
+          Modified profiles
+
+          ${{ steps.detect-profiles.outputs.result }}
