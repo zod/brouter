@@ -29,8 +29,12 @@ jobs:
                 OUTPUT="$OUTPUT$PROFILE_OUTPUT"$'\n'
             fi
         done
-        OUTPUT="${OUTPUT//$'\n'/'<br>'}"
-        echo "result=$OUTPUT" >> $GITHUB_OUTPUT
+        echo "$OUTPUT"
+        # Multiline handling
+        OUTPUT="${OUTPUT//'%'/'%25'}"
+        OUTPUT="${OUTPUT//$'\n'/'%0A'}"
+        OUTPUT="${OUTPUT//$'\r'/'%0D'}"
+        echo "::set-output name=result::$OUTPUT"
     - uses: marocchino/sticky-pull-request-comment@v2
       with:
         header: profiles-tester
