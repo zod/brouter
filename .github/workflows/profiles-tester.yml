@@ -24,8 +24,7 @@ jobs:
         for PROFILE in misc/profiles2/*.brf; do
             if ! git diff --quiet ${HEAD} ${BASE} $PROFILE; then
                 PROFILE_BASENAME=$(basename $PROFILE .brf)
-                # PROFILES+=("$PROFILE_TESTER/?testsuite=$TESTSUITE.json&profile=$GITHUB_RAW/$HEAD/$PROFILE&referenceProfile=$GITHUB_RAW/$BASE/$PROFILE")
-                PROFILE_OUTPUT="* $PROFILE_BASENAME [:left_right_arrow: profiles-tester]($PROFILE_TESTER/?testsuite=$PROFILE_BASENAME.json&profile=$GITHUB_RAW/$HEAD/$PROFILE&referenceProfile=$GITHUB_RAW/$BASE/$PROFILE)"
+                PROFILE_OUTPUT="* $PROFILE_BASENAME [:left_right_arrow: profiles-tester]($PROFILE_TESTER/?testsuite=$PROFILE_BASENAME.json&testProfile=$GITHUB_RAW/$HEAD/$PROFILE&referenceProfile=$GITHUB_RAW/$BASE/$PROFILE)"
                 OUTPUT="$OUTPUT$PROFILE_OUTPUT"$'\n'
             fi
         done
