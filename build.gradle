@@ -46,6 +46,7 @@ allprojects {
         }
     }
 
+/*
     apply plugin: "checkstyle"
     apply plugin: "pmd"
 
@@ -57,6 +58,7 @@ allprojects {
         ruleSets = []
         // ignoreFailures = true
     }
+*/
 }
 
 task clean(type: Delete) {
